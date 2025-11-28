@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>{{ property.title }}</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body { background:#f8f9fa; }
+    .property-img { width:100%; max-height:400px; object-fit:cover; border-radius:8px; }
+    .thumbnail { width:80px; height:60px; object-fit:cover; border-radius:4px; cursor:pointer; border:1px solid #ccc; }
+    .thumbnail:hover { border-color:#007bff; }
+  </style>
+  <script>
+    function changeMainImage(src){
+      document.getElementById("mainImage").src = src;
+    }
+  </script>
+</head>
+<body>
+<div class="container py-4">
+  <a href="{{ url_for('tenant_dashboard') }}" class="btn btn-link mb-3">&larr; Back to Dashboard</a>
+
+  <h3>{{ property.title }}</h3>
+  <p><strong>Location:</strong> {{ property.location }}</p>
+  <p><strong>Price:</strong> ₹{{ property.price }}</p>
+  <p><strong>Rooms:</strong> {{ property.rooms }}</p>
+  {% if property.description %}<p>{{ property.description }}</p>{% endif %}
+
+  {% set first_image = property.images[0] if property.images and property.images[0] else None %}
+  {% if first_image %}
+    <img id="mainImage" src="{{ url_for('static', filename='uploads/' ~ first_image) }}" class="property-img mb-2">
+    <div class="d-flex gap-2 flex-wrap">
+      {% for img in property.images %}
+        {% if img %}
+          <img src="{{ url_for('static', filename='uploads/' ~ img) }}" class="thumbnail" onclick="changeMainImage(this.src)">
+        {% endif %}
+      {% endfor %}
+    </div>
+  {% else %}
+    <img src="https://via.placeholder.com/400x200?text=No+Image" class="property-img">
+  {% endif %}
+
+  {% if property.map_url %}
+    <div class="mt-3">
+      <a href="{{ property.map_url }}" target="_blank" class="btn btn-success">View on Map</a>
+    </div>
+  {% endif %}
+
+  <!-- Booking section -->
+  <div class="mt-4">
+    {% if property.booked %}
+      <div class="alert alert-success">
+        This property has been booked by {{ property.booked_by }}.
+      </div>
+    {% else %}
+      {% if property.my_booking %}
+        <div class="alert alert-info">
+          You have already requested booking for this property. Status: <strong>{{ property.my_booking.status }}</strong>
+        </div>
+      {% else %}
+        <form method="POST" action="{{ url_for('book_property', property_id=property._id) }}">
+          <button class="btn btn-primary">Book This Property</button>
+        </form>
+      {% endif %}
+    {% endif %}
+  </div>
+
+  <!-- Reviews & Add review form -->
+  <div class="mt-4">
+    <h5>Ratings & Reviews
+      {% if property.avg_rating %}
+        <small class="text-muted"> — Avg: {{ property.avg_rating }}/5 ({{ property.reviews|length }} reviews)</small>
+      {% else %}
+        <small class="text-muted"> — No reviews yet</small>
+      {% endif %}
+    </h5>
+
+    <!-- Reviews list -->
+    <div class="mt-3">
+      {% if property.reviews and property.reviews|length > 0 %}
+        {% for r in property.reviews|reverse %}
+          <div class="card mb-2">
+            <div class="card-body">
+              <div class="d-flex justify-content-between">
+                <div><strong>{{ r.by }}</strong> <small class="text-muted">({{ r.email }})</small></div>
+                <div><strong>{{ r.rating }}/5</strong></div>
+              </div>
+              {% if r.comment %}
+                <p class="mb-0 mt-2">{{ r.comment }}</p>
+              {% endif %}
+              <small class="text-muted">
+                {% if r.created_at %}
+                  {% if r.created_at.__class__.__name__ == 'datetime' %}
+                    {{ r.created_at.strftime('%Y-%m-%d %H:%M') }}
+                  {% else %}
+                    {{ r.created_at }}
+                  {% endif %}
+                {% endif %}
+              </small>
+            </div>
+          </div>
+        {% endfor %}
+      {% else %}
+        <div class="alert alert-light">No reviews yet — be the first to review this property.</div>
+      {% endif %}
+    </div>
+
+    <!-- Add review form (only show to logged-in tenant) -->
+    {% if session.role == 'tenant' %}
+      <div class="mt-4">
+        <h6>Add your review</h6>
+        <form method="POST" action="{{ url_for('add_review', property_id=property._id) }}">
+          <div class="row g-2 align-items-center">
+            <div class="col-auto">
+              <label for="rating" class="form-label">Rating</label>
+              <input id="rating" name="rating" type="number" min="0" max="5" step="0.5" class="form-control" required>
+            </div>
+            <div class="col">
+              <label for="comment" class="form-label">Comment</label>
+              <input id="comment" name="comment" type="text" class="form-control" placeholder="Optional comment">
+            </div>
+            <div class="col-auto align-self-end">
+              <button class="btn btn-primary" type="submit">Submit</button>
+            </div>
+          </div>
+        </form>
+      </div>
+    {% endif %}
+  </div>
+</div>
+</body>
+</html>

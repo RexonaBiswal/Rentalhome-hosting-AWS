@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Tenant Dashboard</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body { background:#f8f9fa }
+    .property-img { width: 100%; height: 200px; object-fit: cover; border-radius: 8px; margin-bottom: 10px; }
+    .card { border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.08); transition: transform 0.3s; }
+    .card:hover { transform: translateY(-5px); }
+    .property-actions { margin-top: 10px; display: flex; gap: 0.5rem; flex-wrap: wrap; }
+  </style>
+</head>
+<body>
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h3>Find Rentals</h3>
+    <div>
+      <a class="btn btn-outline-secondary me-2" href="{{ url_for('my_bookings') }}">My Bookings</a>
+      <a class="btn btn-outline-danger" href="{{ url_for('logout') }}">Logout</a>
+    </div>
+     <div>
+      <!-- Notification summary -->
+      {% if notifications and notifications|length > 0 %}
+  <a href="{{ url_for('notifications') }}" class="btn btn-outline-info me-2">Notifications: {{ notifications|length }}</a>
+{% endif %}
+
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <form method="GET" action="{{ url_for('tenant_dashboard') }}" class="row g-2 mb-4">
+    <div class="col-md-3">
+      <input name="location" class="form-control" placeholder="Location" value="{{ filters.location }}">
+    </div>
+    <div class="col-md-2">
+      <input name="min_price" type="number" step="0.01" class="form-control" placeholder="Min price" value="{{ filters.min_price }}">
+    </div>
+    <div class="col-md-2">
+      <input name="max_price" type="number" step="0.01" class="form-control" placeholder="Max price" value="{{ filters.max_price }}">
+    </div>
+    <div class="col-md-2">
+      <input name="rooms" type="number" class="form-control" placeholder="Rooms" value="{{ filters.rooms }}">
+    </div>
+    <div class="col-md-3">
+      <button class="btn btn-primary w-100" type="submit">Apply</button>
+    </div>
+  </form>
+
+  <div class="row g-3">
+    {% if properties %}
+      {% for p in properties %}
+        <div class="col-md-4">
+          <div class="card p-3 h-100">
+            {% set first_image = p.images[0] if p.images and p.images[0] else None %}
+            {% if first_image %}
+              <img src="{{ url_for('static', filename='uploads/' ~ first_image) }}" class="property-img">
+            {% else %}
+              <img src="https://via.placeholder.com/400x200?text=No+Image" class="property-img">
+            {% endif %}
+
+            <h5>{{ p.title }}</h5>
+            <p class="mb-1"><strong>Location:</strong> {{ p.location }}</p>
+            <p class="mb-1"><strong>Price:</strong> ₹{{ p.price }}</p>
+            <p class="mb-1"><strong>Rooms:</strong> {{ p.rooms }}</p>
+            {% if p.avg_rating %}
+              <p class="mb-1"><strong>Rating:</strong> {{ p.avg_rating }}/5 ({{ p.reviews|length }})</p>
+            {% endif %}
+            {% if p.description %}<p class="text-muted mt-2">{{ p.description }}</p>{% endif %}
+
+            <div class="property-actions">
+              <a href="{{ p.map_url }}" target="_blank" class="btn btn-sm btn-success">View on Map</a>
+              <a href="{{ url_for('property_details', property_id=p._id) }}" class="btn btn-sm btn-outline-primary">View Details</a>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    {% else %}
+      <div class="col-12">
+        <div class="alert alert-info">No properties found.</div>
+      </div>
+    {% endif %}
+  </div>
+</div>
+</body>
+</html>

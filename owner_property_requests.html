@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Booking Requests - {{ property_title }}</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+<nav class="navbar navbar-expand-lg navbar-light bg-light mb-3">
+  <div class="container">
+    <a class="navbar-brand" href="{{ url_for('owner_dashboard') }}">Owner Dashboard</a>
+    <div class="d-flex">
+      <a class="btn btn-outline-secondary" href="{{ url_for('owner_dashboard') }}">Back to Properties</a>
+      <a class="btn btn-outline-danger ms-2" href="{{ url_for('logout') }}">Logout</a>
+    </div>
+  </div>
+</nav>
+
+<div class="container">
+  <h3 class="mb-3">Booking Requests for: {{ property_title }}</h3>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <div class="mb-3">
+        {% for category, message in messages %}
+          <div class="alert alert-{{ category }}">{{ message }}</div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
+
+  {% if requests %}
+    <table class="table table-bordered align-middle">
+      <thead class="table-light">
+        <tr>
+          <th>#</th>
+          <th>Tenant Name</th>
+          <th>Tenant Email</th>
+          <th>Status</th>
+          <th>Requested At</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in requests %}
+        <tr>
+          <td>{{ loop.index }}</td>
+          <td>{{ r.tenant_name }}</td>
+          <td>{{ r.tenant_email }}</td>
+          <td>
+            {% if r.status == "PENDING" %}
+              <span class="badge bg-warning text-dark">Pending</span>
+            {% elif r.status == "APPROVED" %}
+              <span class="badge bg-success">Approved</span>
+            {% else %}
+              <span class="badge bg-danger">Rejected</span>
+            {% endif %}
+          </td>
+          <td>{{ r.created_at }}</td>
+          <td>
+            {% if r.status == "PENDING" %}
+              <form method="POST" action="{{ url_for('owner_approve_request', booking_id=r._id) }}" style="display:inline;">
+                <button type="submit" class="btn btn-sm btn-success">Approve</button>
+              </form>
+              <form method="POST" action="{{ url_for('owner_reject_request', booking_id=r._id) }}" style="display:inline;">
+                <button type="submit" class="btn btn-sm btn-outline-danger">Reject</button>
+              </form>
+            {% elif r.status == "APPROVED" %}
+              <span class="text-success fw-bold">Selected</span>
+            {% else %}
+              <span class="text-muted">Not selected</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <div class="alert alert-info">No booking requests for this property yet.</div>
+  {% endif %}
+</div>
+</body>
+</html>

@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Owner Dashboard</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body { background:#f8f9fa; font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    .navbar { box-shadow:0 2px 6px rgba(0,0,0,0.1); }
+    .card { border:none; border-radius:12px; box-shadow:0 4px 10px rgba(0,0,0,0.08); transition:transform .3s; }
+    .card:hover { transform:translateY(-5px); }
+    .card img { border-radius:12px 12px 0 0; object-fit:cover; height:180px; }
+    .property-actions { margin-top:10px; display:flex; gap:.5rem; align-items:center; flex-wrap:wrap; }
+    .alert-custom { background:#fff; border:1px dashed #ccc; border-radius:12px; padding:30px; text-align:center; }
+    .action-form { display:inline; }
+  </style>
+</head>
+<body>
+
+<nav class="navbar navbar-expand-lg navbar-light bg-white">
+  <div class="container">
+    <a class="navbar-brand text-primary fw-bold" href="#">Owner Dashboard</a>
+    <div class="d-flex">
+      <a class="btn btn-primary me-2" href="/owner/add">+ Add Property</a>
+      <a class="btn btn-outline-secondary me-2" href="/owner/generate-fake/5">Generate 5 Fake</a>
+      <a class="btn btn-outline-warning me-2" href="/owner/clear-fake">Clear Fake</a>
+      <a class="btn btn-outline-danger" href="/logout">Logout</a>
+    </div>
+  </div>
+</nav>
+
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h3 class="mb-4">Your Properties</h3>
+    <div>
+      <!-- Notification summary -->
+      {% if notifications and notifications|length > 0 %}
+  <a href="{{ url_for('notifications') }}" class="btn btn-outline-info me-2">Notifications: {{ notifications|length }}</a>
+{% endif %}
+
+    </div>
+  </div>
+
+  <div class="row g-4">
+    {% if properties %}
+      {% for p in properties %}
+        <div class="col-md-4 col-sm-6">
+          <div class="card h-100">
+            {% if p.images %}
+              <img src="{{ url_for('static', filename='uploads/' ~ p.images[0]) }}" class="card-img-top" alt="{{ p.title }}">
+            {% else %}
+              <img src="https://via.placeholder.com/400x200" class="card-img-top" alt="Default Property">
+            {% endif %}
+            <div class="card-body">
+              <h5 class="card-title">{{ p.title }}</h5>
+              <p class="mb-1"><strong>Location:</strong> {{ p.location }}</p>
+              <p class="mb-1"><strong>Price:</strong> ₹{{ p.price }}</p>
+              <p class="mb-1"><strong>Rooms:</strong> {{ p.rooms }}</p>
+              {% if p.avg_rating %}
+                <p class="mb-1"><strong>Rating:</strong> {{ p.avg_rating }}/5 ({{ p.reviews|length }})</p>
+              {% endif %}
+              {% if p.description %}<p class="text-muted mt-2">{{ p.description }}</p>{% endif %}
+              <div class="property-actions">
+                <a href="https://www.google.com/maps/search/?api=1&query={{ p.location | urlencode }}" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-success">View on Map</a>
+                <a href="{{ url_for('edit_property', property_id=p._id) }}" class="btn btn-sm btn-outline-primary">Edit</a>
+
+                <a href="{{ url_for('owner_requests', property_id=p._id) }}" class="btn btn-sm btn-info">View Requests</a>
+
+                <form class="action-form" method="POST" action="{{ url_for('owner_delete', prop_id=p._id) }}">
+                  <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Delete this property?');">Delete</button>
+                </form>
+              </div>
+
+              {% if p.booked %}
+                <div class="mt-2"><small class="text-success">Booked by: {{ p.booked_by }}</small></div>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    {% else %}
+      <div class="col-12">
+        <div class="alert-custom">
+          <h5>No properties added yet</h5>
+          <p class="text-muted">Start by adding your first property to showcase it here.</p>
+          <a class="btn btn-primary mt-2" href="/owner/add">+ Add Property</a>
+        </div>
+      </div>
+    {% endif %}
+  </div>
+</div>
+</body>
+</html>
